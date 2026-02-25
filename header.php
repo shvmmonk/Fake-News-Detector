@@ -778,12 +778,15 @@ for (var i = 0; i < 20; i++) {
 }
 
 // MUSIC
-var music = document.getElementById('bgMusic');
-var btn   = document.getElementById('musicBtn');
+var music   = document.getElementById('bgMusic');
+var btn     = document.getElementById('musicBtn');
 var musicOn = localStorage.getItem('musicOn') !== 'false';
+// Remember playback position across pages
+var savedTime = parseFloat(localStorage.getItem('musicTime') || '0');
 
 function playMusic() {
   music.volume = 0.3;
+  if (savedTime > 0) music.currentTime = savedTime;
   music.play().then(function() {
     btn.textContent = '🔊';
     localStorage.setItem('musicOn','true');
@@ -791,6 +794,7 @@ function playMusic() {
     btn.textContent = '🔇';
   });
 }
+
 function toggleMusic() {
   if (music.paused) {
     playMusic();
@@ -801,9 +805,35 @@ function toggleMusic() {
     localStorage.setItem('musicOn','false');
   }
 }
+
+// Save position every second so next page can resume from same spot
+setInterval(function() {
+  if (!music.paused) {
+    localStorage.setItem('musicTime', music.currentTime);
+  }
+}, 1000);
+
+// Pause when tab is hidden, resume when tab is visible
+document.addEventListener('visibilitychange', function() {
+  if (document.hidden) {
+    if (!music.paused) {
+      localStorage.setItem('musicTime', music.currentTime);
+      music.pause();
+      // Keep btn as 🔊 so we know it was playing before hide
+    }
+  } else {
+    if (localStorage.getItem('musicOn') !== 'false') {
+      savedTime = parseFloat(localStorage.getItem('musicTime') || '0');
+      playMusic();
+    }
+  }
+});
+
 window.addEventListener('load', function() {
+  savedTime = parseFloat(localStorage.getItem('musicTime') || '0');
   if (musicOn) {
     music.volume = 0.3;
+    if (savedTime > 0) music.currentTime = savedTime;
     music.play().then(function(){ btn.textContent='🔊'; }).catch(function(){
       document.addEventListener('click', function fc(e) {
         if(e.target.id !== 'musicBtn') { playMusic(); document.removeEventListener('click',fc); }
