@@ -1,6 +1,7 @@
 <?php
 require_once 'includes/db.php';
-$pageTitle = 'Articles';
+require_once 'lang.php';
+$pageTitle = $t['articles'];
 
 $search   = $_GET['search']   ?? '';
 $category = $_GET['category'] ?? '';
@@ -29,54 +30,67 @@ require_once 'includes/header.php';
 ?>
 <div class="wrapper">
   <div class="page-header">
-    <h1>All Articles</h1>
-    <p><?= count($articles) ?> ARTICLES FOUND</p>
+    <div>
+      <h1><?= $t['articles'] ?></h1>
+      <p><?= count($articles) ?> <?= strtoupper($t['articles_found']) ?></p>
+    </div>
   </div>
 
   <div class="card mb-20">
     <div class="card-body" style="padding:16px 24px">
       <form method="GET" style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;">
         <div class="form-group" style="margin:0;flex:2;min-width:180px;">
-          <label>Search</label>
-          <input type="text" name="search" value="<?= htmlspecialchars($search) ?>" placeholder="Title or author...">
+          <label><?= $t['search'] ?></label>
+          <input type="text" name="search" value="<?= htmlspecialchars($search) ?>" placeholder="<?= $t['title'] ?>...">
         </div>
         <div class="form-group" style="margin:0;flex:1;min-width:130px;">
-          <label>Category</label>
+          <label><?= $t['category'] ?></label>
           <select name="category">
-            <option value="">All</option>
+            <option value=""><?= $t['all'] ?></option>
             <?php foreach($cats as $cat): ?>
             <option value="<?= $cat['category_id'] ?>" <?= $category==$cat['category_id']?'selected':'' ?>><?= htmlspecialchars($cat['name']) ?></option>
             <?php endforeach; ?>
           </select>
         </div>
         <div class="form-group" style="margin:0;flex:1;min-width:120px;">
-          <label>Verdict</label>
+          <label><?= $t['verdict'] ?></label>
           <select name="verdict">
-            <option value="">All</option>
-            <option value="fake"       <?= $verdict=='fake'?'selected':'' ?>>Fake</option>
-            <option value="real"       <?= $verdict=='real'?'selected':'' ?>>Real</option>
-            <option value="misleading" <?= $verdict=='misleading'?'selected':'' ?>>Misleading</option>
+            <option value=""><?= $t['all'] ?></option>
+            <option value="fake"       <?= $verdict=='fake'?'selected':'' ?>><?= $t['fake'] ?></option>
+            <option value="real"       <?= $verdict=='real'?'selected':'' ?>><?= $t['real'] ?></option>
+            <option value="misleading" <?= $verdict=='misleading'?'selected':'' ?>><?= $t['misleading'] ?></option>
           </select>
         </div>
         <div style="display:flex;gap:8px;">
-          <button type="submit" class="btn btn-primary">Filter</button>
-          <a href="articles.php" class="btn btn-ghost">Clear</a>
+          <button type="submit" class="btn btn-primary"><?= $t['filter'] ?></button>
+          <a href="articles.php" class="btn btn-ghost"><?= $t['clear'] ?></a>
         </div>
       </form>
     </div>
   </div>
 
   <div style="display:flex;justify-content:flex-end;margin-bottom:16px;">
-    <a href="add_article.php" class="btn btn-green">+ Submit Article</a>
+    <a href="add_article.php" class="btn btn-green"><?= $t['submit_new'] ?></a>
   </div>
 
   <div class="card">
     <div class="tbl-wrap">
       <table>
-        <thead><tr><th>#</th><th>Title</th><th>Author</th><th>Category</th><th>Source</th><th>Verdict</th><th>Confidence</th><th>Action</th></tr></thead>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th><?= $t['title'] ?></th>
+            <th><?= $t['author'] ?></th>
+            <th><?= $t['category'] ?></th>
+            <th><?= $t['source'] ?></th>
+            <th><?= $t['verdict'] ?></th>
+            <th><?= $t['confidence'] ?></th>
+            <th><?= $t['action'] ?></th>
+          </tr>
+        </thead>
         <tbody>
         <?php if(empty($articles)): ?>
-          <tr><td colspan="8" style="text-align:center;color:var(--muted);padding:40px;">No articles found.</td></tr>
+          <tr><td colspan="8" style="text-align:center;color:var(--muted);padding:40px;"><?= $t['no_articles'] ?></td></tr>
         <?php else: foreach($articles as $row): ?>
         <?php $v=$row['verdict']??'unverified'; ?>
         <tr>
@@ -85,7 +99,7 @@ require_once 'includes/header.php';
           <td class="text-muted text-sm"><?= htmlspecialchars($row['author'] ?? '—') ?></td>
           <td class="text-sm"><?= htmlspecialchars($row['category'] ?? '—') ?></td>
           <td class="text-muted text-sm"><?= htmlspecialchars($row['source'] ?? '—') ?></td>
-          <td><span class="badge b-<?= $v ?>"><?= strtoupper($v) ?></span></td>
+          <td><span class="badge b-<?= $v ?>"><?= strtoupper($t[$v] ?? $v) ?></span></td>
           <td>
             <?php if($row['confidence_score']): ?>
             <div class="cbar-wrap">
@@ -94,7 +108,7 @@ require_once 'includes/header.php';
             </div>
             <?php else: echo '—'; endif; ?>
           </td>
-          <td><a href="article_detail.php?id=<?= $row['article_id'] ?>" class="btn btn-ghost" style="font-size:0.65rem;padding:4px 10px;">View</a></td>
+          <td><a href="article_detail.php?id=<?= $row['article_id'] ?>" class="btn btn-ghost" style="font-size:0.65rem;padding:4px 10px;"><?= $t['view'] ?></a></td>
         </tr>
         <?php endforeach; endif; ?>
         </tbody>
@@ -102,4 +116,5 @@ require_once 'includes/header.php';
     </div>
   </div>
 </div>
+<?php require_once 'includes/anchor.php'; ?>
 <?php require_once 'includes/footer.php'; ?>
