@@ -69,14 +69,15 @@ foreach (array_slice($all_articles, 0, MAX_TOTAL) as $art) {
 
     try {
         $stmt = $pdo->prepare("
-            INSERT INTO articles (title, content, author, url, source_id, category_id, submitted_by, published_at, created_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())
+            INSERT INTO articles (title, content, author, url, image_url, source_id, category_id, submitted_by, published_at, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
         ");
         $stmt->execute([
             substr($art['title'], 0, 499),
             $art['content'],
             $art['author'] ?? 'Unknown',
             $art['url'] ?? null,
+            !empty($art['image_url']) ? $art['image_url'] : null,
             $source_id,
             $category_id,
             DEFAULT_USER_ID,
@@ -139,13 +140,14 @@ function fetch_newsapi(string $key): array {
         foreach ($data['articles'] as $a) {
             if (($a['title'] ?? '') === '[Removed]') continue;
             $results[] = [
-                'title'    => $a['title'] ?? '',
-                'content'  => $a['description'] ?? $a['content'] ?? '',
-                'author'   => $a['author'] ?? ($a['source']['name'] ?? 'Unknown'),
-                'url'      => $a['url'] ?? '',
-                'source'   => $a['source']['name'] ?? '',
-                'category' => $cat,
-                'date'     => $a['publishedAt'] ?? '',
+                'title'     => $a['title'] ?? '',
+                'content'   => $a['description'] ?? $a['content'] ?? '',
+                'author'    => $a['author'] ?? ($a['source']['name'] ?? 'Unknown'),
+                'url'       => $a['url'] ?? '',
+                'image_url' => $a['urlToImage'] ?? '',   // ← real article image
+                'source'    => $a['source']['name'] ?? '',
+                'category'  => $cat,
+                'date'      => $a['publishedAt'] ?? '',
             ];
         }
         usleep(200000); // 0.2s rate limit pause
@@ -179,13 +181,14 @@ function fetch_gnews(string $key): array {
 
         foreach ($data['articles'] as $a) {
             $results[] = [
-                'title'    => $a['title'] ?? '',
-                'content'  => $a['description'] ?? $a['content'] ?? '',
-                'author'   => $a['source']['name'] ?? 'Unknown',
-                'url'      => $a['url'] ?? '',
-                'source'   => $a['source']['name'] ?? '',
-                'category' => $t['cat'],
-                'date'     => $a['publishedAt'] ?? '',
+                'title'     => $a['title'] ?? '',
+                'content'   => $a['description'] ?? $a['content'] ?? '',
+                'author'    => $a['source']['name'] ?? 'Unknown',
+                'url'       => $a['url'] ?? '',
+                'image_url' => $a['image'] ?? '',   // ← GNews uses 'image' field
+                'source'    => $a['source']['name'] ?? '',
+                'category'  => $t['cat'],
+                'date'      => $a['publishedAt'] ?? '',
             ];
         }
         usleep(300000);
@@ -249,14 +252,31 @@ function fetch_rss_feeds(): array {
 
                 if (!$title || strlen($content) < 30) continue;
 
+                // Extract image from RSS — try enclosure, media:content, media:thumbnail
+                $img_url = '';
+                if (isset($item->enclosure) && (string)$item->enclosure['type'] && str_starts_with((string)$item->enclosure['type'], 'image')) {
+                    $img_url = (string)$item->enclosure['url'];
+                }
+                if (!$img_url) {
+                    $media_ns = $item->children('media', true);
+                    if (isset($media_ns->content['url']))   $img_url = (string)$media_ns->content['url'];
+                    if (!$img_url && isset($media_ns->thumbnail['url'])) $img_url = (string)$media_ns->thumbnail['url'];
+                }
+                // Try parsing og:image from description HTML as last resort
+                if (!$img_url) {
+                    preg_match('/<img[^>]+src=["\']([^"\']+)["\']/', (string)($item->description ?? ''), $m);
+                    if (!empty($m[1])) $img_url = $m[1];
+                }
+
                 $results[] = [
-                    'title'    => $title,
-                    'content'  => substr($content, 0, 2000),
-                    'author'   => $author ?: $source_name,
-                    'url'      => $url,
-                    'source'   => $source_name,
-                    'category' => $category,
-                    'date'     => $date,
+                    'title'     => $title,
+                    'content'   => substr($content, 0, 2000),
+                    'author'    => $author ?: $source_name,
+                    'url'       => $url,
+                    'image_url' => $img_url,
+                    'source'    => $source_name,
+                    'category'  => $category,
+                    'date'      => $date,
                 ];
                 $count++;
             }
