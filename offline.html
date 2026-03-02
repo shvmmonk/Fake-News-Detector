@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FakeGuard — Offline</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@900&family=Oswald:wght@400;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{--bg:#0d0d0d;--acc:#e63232;--text:#f0f0f0;--muted:#555;}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Oswald',sans-serif;}
+
+body{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  min-height:100vh;padding:32px;text-align:center;position:relative;overflow:hidden;
+}
+
+/* Animated background grid */
+body::before{
+  content:'';position:fixed;inset:0;
+  background-image:linear-gradient(rgba(230,50,50,0.04) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(230,50,50,0.04) 1px,transparent 1px);
+  background-size:48px 48px;
+  animation:gridDrift 20s linear infinite;
+}
+@keyframes gridDrift{0%{transform:translate(0,0)}100%{transform:translate(48px,48px)}}
+
+/* Scanlines */
+body::after{
+  content:'';position:fixed;inset:0;pointer-events:none;
+  background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.04) 2px,rgba(0,0,0,0.04) 4px);
+}
+
+.card{
+  position:relative;z-index:10;max-width:420px;width:100%;
+  background:rgba(20,20,20,0.9);border:1px solid rgba(230,50,50,0.2);
+  border-radius:8px;padding:52px 40px;
+  box-shadow:0 0 60px rgba(230,50,50,0.08),0 24px 60px rgba(0,0,0,0.5);
+}
+.card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:3px;
+  background:linear-gradient(90deg,var(--acc),#ff8c00,var(--acc));
+  background-size:200%;animation:shimmer 3s linear infinite;
+  border-radius:8px 8px 0 0;
+}
+@keyframes shimmer{0%{background-position:200%}100%{background-position:-200%}}
+
+/* Signal icon */
+.signal{
+  width:64px;height:64px;margin:0 auto 28px;position:relative;
+}
+.signal-ring{
+  position:absolute;border-radius:50%;border:2px solid var(--acc);
+  animation:pulse 2s ease-out infinite;opacity:0;
+}
+.signal-ring:nth-child(1){inset:0;animation-delay:0s;}
+.signal-ring:nth-child(2){inset:-12px;animation-delay:0.5s;}
+.signal-ring:nth-child(3){inset:-24px;animation-delay:1s;}
+@keyframes pulse{0%{transform:scale(0.5);opacity:0.7}100%{transform:scale(1.2);opacity:0}}
+.signal-core{
+  position:absolute;inset:12px;border-radius:50%;
+  background:rgba(230,50,50,0.15);border:2px solid var(--acc);
+  display:flex;align-items:center;justify-content:center;
+  font-size:1.4rem;
+}
+
+/* Logo */
+.logo{
+  font-family:'Playfair Display',serif;font-size:1.8rem;font-weight:900;
+  letter-spacing:-1px;margin-bottom:6px;
+}
+.logo em{color:var(--acc);font-style:italic;}
+
+.tagline{
+  font-size:0.58rem;letter-spacing:4px;color:var(--muted);
+  text-transform:uppercase;margin-bottom:32px;
+}
+
+h1{
+  font-family:'Playfair Display',serif;font-size:1.5rem;font-weight:900;
+  margin-bottom:12px;line-height:1.2;
+}
+p{font-size:0.85rem;line-height:1.7;color:var(--muted);margin-bottom:28px;}
+
+.btn-retry{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:13px 28px;background:var(--acc);color:#fff;
+  border:none;cursor:pointer;font-family:'Oswald',sans-serif;
+  font-size:0.8rem;font-weight:600;letter-spacing:2px;text-transform:uppercase;
+  border-radius:4px;transition:all 0.2s;width:100%;justify-content:center;
+  margin-bottom:12px;
+}
+.btn-retry:hover{background:#cc2020;transform:translateY(-1px);box-shadow:0 4px 20px rgba(230,50,50,0.4);}
+.btn-retry:active{transform:translateY(0);}
+
+.cached-note{
+  font-size:0.65rem;color:var(--muted);letter-spacing:1px;
+  padding-top:20px;border-top:1px solid rgba(255,255,255,0.06);
+  line-height:1.6;
+}
+.cached-note a{color:var(--acc);text-decoration:none;}
+
+/* Status dots */
+.status-row{
+  display:flex;justify-content:center;gap:16px;margin-bottom:28px;
+}
+.status-item{display:flex;align-items:center;gap:6px;font-size:0.62rem;letter-spacing:1px;color:var(--muted);}
+.status-dot{width:7px;height:7px;border-radius:50%;}
+.dot-off{background:#333;}
+.dot-on{background:var(--acc);box-shadow:0 0 6px var(--acc);animation:dotBlink 1.5s ease infinite;}
+@keyframes dotBlink{0%,100%{opacity:1}50%{opacity:0.3}}
+</style>
+</head>
+<body>
+
+<div class="card">
+  <div class="signal">
+    <div class="signal-ring"></div>
+    <div class="signal-ring"></div>
+    <div class="signal-ring"></div>
+    <div class="signal-core">📡</div>
+  </div>
+
+  <div class="logo">Fake<em>Guard</em></div>
+  <div class="tagline">AI-Powered Fact Checking</div>
+
+  <div class="status-row">
+    <div class="status-item"><div class="status-dot dot-off"></div>Internet</div>
+    <div class="status-item"><div class="status-dot dot-on"></div>App Ready</div>
+    <div class="status-item"><div class="status-dot dot-off"></div>Live Data</div>
+  </div>
+
+  <h1>You're Offline</h1>
+  <p>FakeGuard needs an internet connection to fetch and verify news articles. Check your connection and try again.</p>
+
+  <button class="btn-retry" onclick="retryConnection()">↻ Retry Connection</button>
+
+  <div class="cached-note">
+    Some pages may be available from cache. Try <a href="/index.php">Dashboard</a> · <a href="/news_short.php">News Feed</a> · <a href="/articles.php">Articles</a>
+  </div>
+</div>
+
+<script>
+function retryConnection() {
+  const btn = document.querySelector('.btn-retry');
+  btn.textContent = '⏳ Checking...';
+  btn.disabled = true;
+  setTimeout(() => {
+    if (navigator.onLine) {
+      window.location.href = '/index.php';
+    } else {
+      btn.textContent = '↻ Still Offline — Try Again';
+      btn.disabled = false;
+    }
+  }, 1200);
+}
+
+window.addEventListener('online', () => {
+  window.location.href = '/index.php';
+});
+</script>
+</body>
+</html>
